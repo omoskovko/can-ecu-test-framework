@@ -17,13 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install CAN kernel modules package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y linux-modules-extra-$(uname -r)
+
       - name: Load CAN kernel modules
         run: |
           sudo modprobe vcan
           sudo modprobe can-raw
           sudo modprobe can-isotp
           lsmod | grep -E "vcan|isotp|^can "
-
+          
       - name: Create vcan0 interface
         run: |
           sudo ip link add dev vcan0 type vcan
