@@ -1,0 +1,8 @@
+python-can>=4.3.0
+cantools>=39.0.0
+can-isotp>=2.0.0
+udsoncan>=1.22.0
+pyyaml>=6.0
+pytest>=8.0.0
+pytest-html>=4.1.0
+

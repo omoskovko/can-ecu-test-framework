@@ -1,0 +1,41 @@
+services:
+  ecu-simulator:
+    build: .
+    container_name: ecu-simulator
+    # network_mode: host — most important for CAN.
+    # The container shares the network namespace with the host and sees vcan0,
+    # created on the host. Without this, CAN traffic won't pass.
+    network_mode: host
+    volumes:
+      # Mount code through volumes so changes in src/ are picked up
+      # without rebuilding the image
+      - ./src:/app/src
+      - ./dbc:/app/dbc
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+    command: >
+      python scripts/run_simulator.py
+      --channel vcan0
+      --dbc /app/dbc/engine_ecu.dbc
+    restart: unless-stopped
+
+  tests:
+    build: .
+    container_name: ecu-tests
+    network_mode: host
+    depends_on:
+      - ecu-simulator
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./dbc:/app/dbc
+      - ./config:/app/config
+      - ./reports:/app/reports
+    # profiles: ["test"] - service doesn't start on regular `up`,
+    # only when explicitly called with `docker compose --profile test run tests`
+    profiles: ["test"]
+    command: >
+      pytest tests/
+      --html=/app/reports/report.html
+      --self-contained-html
+      -v

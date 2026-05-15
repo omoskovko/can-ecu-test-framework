@@ -1,0 +1,31 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: EngineECU Tester
+
+BO_ 256 EngineData: 8 EngineECU
+ SG_ EngineRPM : 0|16@1+ (0.25,0) [0|16383.75] "rpm" Tester
+ SG_ CoolantTemp : 16|8@1+ (1,-40) [-40|215] "degC" Tester
+ SG_ EngineLoad : 24|8@1+ (0.392157,0) [0|100] "%" Tester
+ SG_ OilPressure : 32|16@1+ (0.1,0) [0|6553.5] "kPa" Tester
+
+BO_ 512 VehicleStatus: 8 EngineECU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|655.35] "km/h" Tester
+ SG_ GearPosition : 16|4@1+ (1,0) [0|15] "" Tester
+ SG_ HandbrakeOn : 20|1@1+ (1,0) [0|1] "" Tester
+
+BO_ 768 DiagnosticInfo: 8 EngineECU
+ SG_ MuxId M : 0|8@1+ (1,0) [0|255] "" Tester
+ SG_ FuelLevel m0 : 8|8@1+ (0.4,0) [0|100] "%" Tester
+ SG_ FuelConsumption m0 : 16|16@1+ (0.1,0) [0|6553.5] "L/100km" Tester
+ SG_ BatteryVoltage m1 : 8|16@1+ (0.001,0) [0|65.535] "V" Tester
+ SG_ AmbientTemp m1 : 24|8@1+ (1,-40) [-40|215] "degC" Tester
+
+CM_ BO_ 256 "Engine telemetry data, 100ms cycle";
+CM_ BO_ 512 "Vehicle dynamic status, 200ms cycle";
+CM_ BO_ 768 "Diagnostic multiplexed data, 500ms cycle";
+CM_ SG_ 256 EngineRPM "Crankshaft rotation speed";
+CM_ SG_ 256 CoolantTemp "Engine coolant temperature";
