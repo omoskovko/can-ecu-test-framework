@@ -26,9 +26,11 @@ jobs:
         run: |
           sudo modprobe vcan
           sudo modprobe can-raw
-          sudo modprobe can-isotp
-          lsmod | grep -E "vcan|isotp|^can "
-          
+          # Note: can-isotp NOT loaded — project uses pure-Python ISO-TP
+          # (isotp.CanStack) for compatibility with environments that
+          # don't ship the can-isotp kernel module.
+          lsmod | grep -E "vcan|^can_raw|^can "
+                    
       - name: Create vcan0 interface
         run: |
           sudo ip link add dev vcan0 type vcan
