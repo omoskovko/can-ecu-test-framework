@@ -1,0 +1,45 @@
+# Test configuration
+# Loaded by pytest fixtures, accessible to all tests
+
+bus:
+  channel: vcan0
+  bitrate: 500000
+  interface: socketcan
+
+dbc:
+  path: dbc/engine_ecu.dbc
+
+uds:
+  request_id: 0x7E0
+  response_id: 0x7E8
+  request_timeout_s: 2.0
+
+ecu:
+  name: EngineECU
+  messages:
+    EngineData:
+      arbitration_id: 0x100
+      expected_cycle_s: 0.1
+      cycle_tolerance: 0.20         # ±20% — Docker adds jitter
+      dlc: 8
+    VehicleStatus:
+      arbitration_id: 0x200
+      expected_cycle_s: 0.2
+      cycle_tolerance: 0.20
+      dlc: 8
+    DiagnosticInfo:
+      arbitration_id: 0x300
+      expected_cycle_s: 0.5
+      cycle_tolerance: 0.20
+      dlc: 8
+
+dids:
+  vin: 0xF190
+  software_version: 0xF195
+  serial_number: 0xF18C
+
+# Expected values for verification
+expected:
+  vin: WBA12345678901234
+  software_version: SW_v1.2.3
+  vin_length: 17
