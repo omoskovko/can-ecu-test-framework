@@ -1,0 +1,88 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest on vcan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load CAN kernel modules
+        run: |
+          sudo modprobe vcan
+          sudo modprobe can-raw
+          sudo modprobe can-isotp
+          lsmod | grep -E "vcan|isotp|^can "
+
+      - name: Create vcan0 interface
+        run: |
+          sudo ip link add dev vcan0 type vcan
+          sudo ip link set up vcan0
+          ip link show vcan0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images (with layer caching)
+        uses: docker/bake-action@v5
+        with:
+          source: .
+          files: docker-compose.yml
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+
+      - name: Start simulator
+        run: docker compose up -d ecu-simulator
+
+      - name: Wait for simulator to be healthy
+        run: |
+          for i in {1..30}; do
+            status=$(docker inspect --format='{{.State.Health.Status}}' ecu-simulator 2>/dev/null || echo "starting")
+            echo "Attempt $i: status=$status"
+            if [ "$status" = "healthy" ]; then
+              echo "Simulator is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Simulator failed to become healthy"
+          docker compose logs ecu-simulator
+          exit 1
+
+      - name: Quick CAN traffic check
+        run: |
+          sudo apt-get update && sudo apt-get install -y can-utils
+          timeout 3 candump -n 5 vcan0 || true
+
+      - name: Run pytest suite
+        run: |
+          mkdir -p reports
+          docker compose --profile test run --rm tests
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report
+          path: reports/report.html
+          if-no-files-found: warn
+
+      - name: Dump simulator logs on failure
+        if: failure()
+        run: docker compose logs ecu-simulator
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+

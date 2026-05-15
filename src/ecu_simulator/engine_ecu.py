@@ -63,8 +63,16 @@ class EngineECU(BaseECU):
         super().start()
         self._uds.start()
         self._sim_stop.clear()
-        self._sim_thread = threading.Thread(target=self._simulate, daemon=True)
+        self._sim_thread = threading.Thread(
+            target=self._simulate, daemon=True, name="sim"
+        )
         self._sim_thread.start()
+        # Healthcheck marker — Docker healthcheck reads this
+        try:
+            Path("/tmp/ecu_ready").write_text("ok")
+        except Exception:
+            self.log.warning("Could not write health marker")
+        self.log.info("EngineECU fully started")
 
     def stop(self) -> None:
         self._sim_stop.set()

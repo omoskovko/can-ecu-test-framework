@@ -18,13 +18,20 @@ services:
       --channel vcan0
       --dbc /app/dbc/engine_ecu.dbc
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ecu_ready"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+      start_period: 5s    
 
   tests:
     build: .
     container_name: ecu-tests
     network_mode: host
     depends_on:
-      - ecu-simulator
+      ecu-simulator:
+        condition: service_healthy
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
